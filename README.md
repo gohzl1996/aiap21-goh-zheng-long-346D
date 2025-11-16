@@ -7,9 +7,33 @@ aiap21-goh-zheng-long-346D/
 ├── data/
 │   └── gas_monitoring.db        # [Not committed] SQLite DB – must be added manually
 ├── src/
-│   ├── __init__.py              # Imports from myFuncs.py
-│   ├── myFuncs.py               # Contains preprocessing, feature engineering, model training & evaluation functions
-│   └── model_training.py        # Main pipeline script
+│   ├── __init__.py
+│   ├── config.py
+│   ├── logging_config.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   ├── load_data.py
+│   │   ├── split.py
+│   │   ├── dedupe.py
+│   │   └── missingness.py
+│   ├── features/
+│   │   ├── __init__.py
+│   │   ├── build_features.py
+│   │   ├── outliers.py
+│   │   └── encoders.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── model.py
+│   │   ├── train.py
+│   │   ├── predict.py
+│   │   └── evaluate.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── io.py
+│       ├── metrics.py
+│       └── validation.py
+├── cli.py
+└── main.py
 ├── eda.ipynb                    # Jupyter Notebook codes with EDA
 ├── run.sh                       # Shell script to run the pipeline
 ├── requirements.txt             # Python dependencies

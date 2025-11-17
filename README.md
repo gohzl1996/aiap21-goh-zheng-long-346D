@@ -96,18 +96,82 @@ The following table summarizes the steps performed by the ML pipeline:
 | **17. Comparison** | Save to 'model_comparison.json' | Stores results for all models (macro F1, per‑class F1, confusion matrices) for visualization and reporting |
 
 # Key findings
-- The dataset was imbalanced, particularly with overrepresentation in the `Low Activity` class.
-- Some `Temperature` values are rather abnormal with ranges 200 to 300, major visible outliers.
-- After imputation and activity-specific outlier removal, model performance improved significantly.
-- Sensor data from `MetalOxideSensor Units`, `CO2 Sensors`, and `Temperature` were found most predictive.
+- Duplicates present:
+    - Exact duplicate rows were found and removed (~120 rows)
+
+    - Ensures dataset integrity and prevents leakage
+
+- Target label inconsistencies:
+    - Activity labels had multiple formats (“LowActivity”, “Low Activity”, etc.)
+
+    - Normalization was necessary to avoid misclassification
+
+- Missingness patterns:
+
+    - Sensor readings (e.g., CO₂, HVAC mode) had non‑random missing values
+
+    - Missingness flags (`is_missing_*`) revealed that missing data itself may correlate with certain activity states
+
+- Interaction features improved signal:
+
+    - Ratios like CO2_ratio and engineered combinations (MOx_1x4) captured nonlinear sensor relationships
+
+    - Helped models differentiate activity levels more effectively
+
+    - Originally used `most_frequent` strategy but found out that it introduces more biasness when dataset is already imbalanced
+
+- Outliers detected:
+
+    - Z‑score analysis flagged abnormal sensor spikes
+
+    - Outlier flags (`is_outlier_*`) preserved anomaly information without discarding data
+
+    - Kept `Temperature` Outliers that are at 200 ~ 300 range because if those values are **true sensor readings** then it could represent **critical health emergencies** and dropping them would erase important events, If they were **sensor glitches**, they will still be useful if flagged as those glitches may correlate with certain conditions (overheating of equipment, poor ventilation)
+
+- Categorical encoding clarified inputs:
+
+    - Ordinal maps applied to ordered categories (e.g., light levels)
+
+    - One‑hot encoding expanded nominal categories (e.g., HVAC modes)
+
+- Class imbalance confirmed:
+
+    - Low activity cases underrepresented compared to moderate/high
+
+    - Models struggled most with minority class detection
+
+- Model performance comparison:
+
+    - **Logistic Regression**: Macro F1 ~0.52, strong on moderate activity, weaker on low activity
+
+    - **MLP**: Macro F1 ~0.37, failed on low activity, unstable overall
+
+    - **XGB**: Macro F1 ~0.55, best balance across classes, especially moderate/high activity
+
+- Bias in imputation strategies:
+
+    - Global `most_frequent` imputation risked reinforcing majority bias
+
+    - Class‑conditional imputation improved fairness by imputing per activity class
+
+- Deployment insight:
+
+    - XGB is the strongest candidate for production alerts
+
+    - LogReg remains valuable for interpretability in clinician dashboards
+
+    - MLP requires further tuning and balancing before deployment
 
 # Feature Processing
 | Feature                                | Type         | Processing                               |
 |----------------------------------------|--------------|------------------------------------------|
-| Temperature, MetalOxideSensors, CO₂s   | Numerical    | Median imputation & Outlier NaN Marking  |
-| Session ID, Humidity                   | Numerical    | Features dropped                         |
-| CO_Gas, Ambient Light, HVAC, Time      | Categorical  | Features dropped                         |                
-| Activity Level (label)                 | Categorical  | Normalized & Encoded                     |
+| Temperature, MetalOxideSensors, CO₂s   | Numerical | Converted to float, median imputation, robust scaling, outlier flagging  |
+| Derived Ratios (CO₂_ratio, MOx_1x4) | Numerical | Engineered interaction features, median imputation, robust scaling |
+| Missingness & Outlier Flags | Numerical | Binary indicators (`is_missing_*`, `is_outlier_*`) retained as passthrough |                
+| Humidity | Numerical | Excluded (low predictive power, redundancy, higher missingness) |
+| Session ID | Identifier | Excluded (non‑predictive, risk of leakage) |
+| CO_Gas, Ambient Light, HVAC, Time | Categorical | Encoded (ordinal or one‑hot), imputed with class‑conditional or neutral 0 |
+| Activity Level (target label) | Categorical | Normalized, label‑encoded for model training |
 
 - Included features based on correlation, SHAP analysis and domain relevance
 - Dropped features displayed low predictive power and high missingness, `Session ID` was

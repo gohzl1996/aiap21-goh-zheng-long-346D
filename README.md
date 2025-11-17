@@ -173,53 +173,68 @@ The following table summarizes the steps performed by the ML pipeline:
 | CO_Gas, Ambient Light, HVAC, Time | Categorical | Encoded (ordinal or one‑hot), imputed with class‑conditional or neutral 0 |
 | Activity Level (target label) | Categorical | Normalized, label‑encoded for model training |
 
-- Included features based on correlation, SHAP analysis and domain relevance
-- Dropped features displayed low predictive power and high missingness, `Session ID` was
-an identifier with no real learning value
-- Overall goal was to retain high and compact signal feature set to max out generalization
-performance as well as minimize noise and overfitting risk due to `Low Activity` being the
-dominant class over the other two
+# Key Notes
+- **Numeric sensors**: retained, scaled, and imputed with median values; extreme values flagged instead of dropped
+
+- **Engineered features**: added ratios and combinations to capture nonlinear sensor relationships
+
+- **Flags**: missingness and outlier indicators kept as passthrough predictors
+
+- **Categoricals**: transformed via encoding and imputation, not dropped
+
+- **Identifiers/redundant features**: Session ID and Humidity excluded deliberately
+
+- **Target labels**: normalized and encoded for consistent multiclass classification
 
 # Model Selection
 Three models were chosen to explore tradeoffs in performance and interpretability:
-|Random Forest      |XGBoost                     |Logistic Regression|
+| **Multilayer Perceptron (MLP)** | **XGBoost** | **Logistic Regression** |
 |-------------------|----------------------------|-------------------|
-|Strong baseline and robust to noisy features|Gradient-boosted trees, ideal for imbalanced and complex feature interactions|for interpretability and feature influence clarity      |
+| Captures nonlinear sensor interactions, flexible architecture for complex tabular data |Gradient‑boosted trees, robust to missingness and imbalance, strong performance on structured features | Interpretable baseline, highlights feature influence and helps detect leakage or imbalance |
 
-# Model Evaluations
-| Metric                                   | Description                                                                                                                                      |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Accuracy**                             | Proportion of total correct predictions. Best when classes are balanced.                                                                         |
-| **Precision**                            | Of all positive predictions, how many were truly positive. Useful when false positives are costly.                                               |
-| **Recall**                               | Of all actual positives, how many were correctly predicted. Important when false negatives are critical.                                         |
-| **F1-score**                             | Harmonic mean of precision and recall. More informative than accuracy in imbalanced datasets.                                                    |
-| **Confusion Matrix**                     | Shows true vs predicted values across all classes. Helps identify specific misclassifications.                                                   |
-| **SHAP (SHapley Additive exPlanations)** | Model-agnostic method for interpreting predictions, showing how each feature impacts output. Used here for top-performing model (Random Forest). |
+- **MLP**: Added to test nonlinear learning capacity on engineered features and anomaly flags
 
-# Results Summary
-| Model                   | Accuracy | F1-Score (Weighted) | Precision | Recall   | SHAP Applied              | Notes                                                                |
-| ----------------------- | -------- | ------------------- | --------- | -------- | ------------------------- | -------------------------------------------------------------------- |
-| **Random Forest**       | High     | **Highest**         | High      | High     | ✅                         | Best overall performance across metrics.                             |
-| **XGBoost**             | High     | Competitive         | High      | High     | ❌                         | Needed label encoding fix before training.                           |
-| **Logistic Regression** | Moderate | Lower               | Moderate  | Moderate | ❌                         | Less effective due to linear assumptions; good for interpretability. |
+- **XGBoost**: Provided the strongest balance of accuracy and robustness, especially with imbalanced activity classes
 
+- **Logistic Regression**: Served as a transparent baseline, useful for interpretability and debugging
+
+# Evaluations & Results Summary
+| Model	| Accuracy | Macro F1 | Macro Precision | Macro Recall | Notes |
+| Logistic Regression | ~0.62 |	~0.51 |	~0.53 |	~0.50 | Solid baseline, interpretable, struggles with minority class |
+| MLP | ~0.45 | ~0.28 | ~0.30 | ~0.27 | Captures nonlinearities but unstable, poor on low activity |
+| XGBoost | ~0.66 | ~0.55 | ~0.56 | ~0.54 | Best balance, handles imbalance and complex interactions well |
 
 # Deployment Considerations
 **Model Saving**
-- All trained models are saved in `.joblib` format to enable consistent and fast future inference.
+
+- All trained models (Logistic Regression, MLP, XGBoost) are saved in `.joblib` format under the `artifacts/` directory
+
+- This enables consistent and fast inference in production environments without retraining
 
 **Pipeline Portability**
-- Relative Paths:
 
-    The pipeline is designed with relative paths to ensure compatibility with automated environments such as GitHub Actions.
+- **Relative Paths**: 
+The pipeline uses relative paths for configuration and artifact storage, ensuring compatibility with automated environments (e.g., GitHub Actions, CI/CD)
 
-- External Data:
+- **External Data**: 
+The SQLite database file (`gas_monitoring.db`) is excluded from the repository for security reasons
 
-    The SQLite database file (`gas_monitoring.db`) is excluded from the repository and must be added manually during deployment. Secure data handling practices should be followed.
+It must be provided manually during deployment, with secure data handling practices enforced
 
 **Modularity**
-- Core functions for feature engineering and model training are modularized in `myFuncs.py`.
-- This allows:
-    - Easy integration of new models
-    - Quick adaptation to variations in data
-    - Reusability across different projects
+
+- Core functions for data loading, preprocessing, feature engineering, model building, training, and evaluation are modularized into the `src/` package
+
+- This design allows:
+
+    - Easy integration of new models (plug‑and‑play with `models/` module)
+
+    - Quick adaptation to variations in sensor data or schema changes
+
+    - Reusability across different ElderGuard projects and healthcare datasets
+
+**Reproducibility & Auditability**
+
+- Preprocessing steps (deduplication, normalization, imputation, encoding, flagging) are versioned and logged for full audit trails
+
+- Model comparison results are saved in JSON (`artifacts/model_comparison.json`) for reproducibility and downstream visualization

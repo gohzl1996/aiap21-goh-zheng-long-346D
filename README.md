@@ -87,8 +87,7 @@ The following table summarizes the steps performed by the ML pipeline:
 | **8. Feature Selection** | Build `numeric_to_scale` + `passthrough_cols` | Splits features into numeric (scaled + imputed) and passthrough (flags, one‑hots, ordinals, session IDs) |
 | **9. Preprocessing Pipeline** | `build_preprocessor()` | - Numeric: `to_float` → median imputation → `RobustScaler`.<br>- Passthrough: **class‑conditional imputation** (per activity class) or constant `0` for numeric flags.<br>- Ensures no NaNs leak into training |
 | **10. Stratified Split** | 'stratified_split(df_sel, TARGET_COLUMN)' | Splits into train/test sets while preserving class distribution. Prevents imbalance distortion |
-| **11. Label Encoding** | `LabelEncoder()` | 
-Converts string activity labels into numeric indices `[0,1,2]` for model compatibility (esp. XGB) |
+| **11. Label Encoding** | `LabelEncoder()` |Converts string activity labels into numeric indices `[0,1,2]` for model compatibility (esp. XGB) |
 | **12. Model Building** | `build_logreg`, `build_mlp`, `build_xgb` | Constructs three pipelines:<br>- **LogReg**: interpretable baseline with class_weight balancing.<br>- **MLP**: nonlinear neural net for complex sensor patterns.<br>- **XGB**: gradient boosting for robust, high‑performance predictions |
 | **13. Training** | 'fit_model(model, X_train, y_train)' | Fits each pipeline. Handles sample weights for XGB, skips for MLP, uses internal balancing for LogReg |
 | **14. Prediction** | 'predict(fitted, X_test)' | Generates predictions on held‑out test set |

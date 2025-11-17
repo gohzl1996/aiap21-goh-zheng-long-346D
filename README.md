@@ -90,6 +90,11 @@ The following table summarizes the steps performed by the ML pipeline:
 | **11. Label Encoding** | `LabelEncoder()` | 
 Converts string activity labels into numeric indices `[0,1,2]` for model compatibility (esp. XGB) |
 | **12. Model Building** | `build_logreg`, `build_mlp`, `build_xgb` | Constructs three pipelines:<br>- **LogReg**: interpretable baseline with class_weight balancing.<br>- **MLP**: nonlinear neural net for complex sensor patterns.<br>- **XGB**: gradient boosting for robust, high‑performance predictions |
+| **13. Training** | 'fit_model(model, X_train, y_train)' | Fits each pipeline. Handles sample weights for XGB, skips for MLP, uses internal balancing for LogReg |
+| **14. Prediction** | 'predict(fitted, X_test)' | Generates predictions on held‑out test set |
+| **15. Evaluation** | `evaluate(y_test, y_pred)` | Produces classification report + confusion matrix |
+| **16. Metrics** | 'macro_f1','per_class_f1' | Summarizes performance across classes (balanced view of imbalanced data) |
+| **17. Comparison** | Save to 'model_comparison.json' | Stores results for all models (macro F1, per‑class F1, confusion matrices) for visualization and reporting |
 
 # Key findings
 - The dataset was imbalanced, particularly with overrepresentation in the `Low Activity` class.

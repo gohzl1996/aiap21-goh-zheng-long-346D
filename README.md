@@ -1,9 +1,14 @@
-Goh Zheng Long 
-goh.zl1996@gmail.com
+# Elderguard Analytics ML Study
+```bash
+Name: Goh Zheng Long 
+Email: goh.zl1996@gmail.com
+```
 
 # Folder Structure Overview
 ```bash
 aiap21-goh-zheng-long-346D/
+├── artifacts/
+│   └── model_comparison.json    # Evaluation and Comparison between models
 ├── data/
 │   └── gas_monitoring.db        # [Not committed] SQLite DB – must be added manually
 ├── src/
@@ -54,19 +59,28 @@ source .venv/bin/activate         # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Run the Pipeline
-bash run.sh                       # or use ./run.sh
+bash run.sh                       # or use ./run.sh on WSL
+
+# Additional Notes:
+# WSL commands to use if need to set up python environment to run this file:
+# sudo apt update
+# sudo apt install python3.12-venv -> If you’re using a different Python version, adjust accordingly (e.g., python3.10-venv)
+# rm -rf venv (Removes python environment)
+# python3 -m venv venv (Recreates python environment)
+# source venv/bin/activate
+# ./run.sh
 ```
 
 ## Pipeline Flow
 
 The following table summarizes the steps performed by the ML pipeline:
 
-| Step | Description |
-|------|-------------|
-| **Data Loading** | Reads dataset from SQLite database located at `data/gas_monitoring.db`. |
-| **Label Normalization** | Standardizes inconsistencies in the `Activity Level` column. |
-| **Missing Value Handling** | Drops columns with >30% missing data; imputes remaining values using median strategy. |
-| **Outlier Capping** | Caps outliers based on activity-specific domain knowledge and boxplot thresholds. |
+| Step | Action Taken | Description |
+|------|--------------|-------------|
+| **1. Load Data** | `load_sqlite(db_path, table_name)` | Reads ~10,000 rows of sensor + activity data from SQLite into a DataFrame |
+| **2. Deduplication** | `report_duplicates` → `drop_full_duplicates` | Identifies and removes exact duplicate rows (120 dropped), ensuring clean, unique records|
+| **3. Normalize Target Labels** | `normalize_target(df, TARGET_COLUMN)` | Standardizes activity labels (e.g., collapsing “LowActivity”, “Low Activity”, “Low_Activity” into one class). Prevents label leakage and inconsistency |
+| **4. Missingness Flags** | `add_missing_flags(df, MISSINGNESS_FLAG_COLUMNS)` | Adds binary indicators (`is_missing_*`) to capture whether a sensor reading was missing. Preserves missingness as a predictive signal |
 | **Feature Selection** | Retains top SHAP-relevant features to enhance model simplicity and interpretability. |
 | **Feature Engineering** | - **Tree models**: Label encoding and domain-specific features. <br> - **Logistic Regression**: One-hot encoding with polynomial interaction terms. |
 | **Resampling** | Applies SMOTEENN to balance class distribution across activity levels. |

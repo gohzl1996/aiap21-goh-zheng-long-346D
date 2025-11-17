@@ -200,6 +200,7 @@ Three models were chosen to explore tradeoffs in performance and interpretabilit
 
 # Evaluations & Results Summary
 | Model	| Accuracy | Macro F1 | Macro Precision | Macro Recall | Notes |
+|-------|----------|----------|-----------------|-------------|-------|
 | Logistic Regression | ~0.62 |	~0.51 |	~0.53 |	~0.50 | Solid baseline, interpretable, struggles with minority class |
 | MLP | ~0.45 | ~0.28 | ~0.30 | ~0.27 | Captures nonlinearities but unstable, poor on low activity |
 | XGBoost | ~0.66 | ~0.55 | ~0.56 | ~0.54 | Best balance, handles imbalance and complex interactions well |

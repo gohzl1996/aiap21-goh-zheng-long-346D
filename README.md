@@ -81,11 +81,12 @@ The following table summarizes the steps performed by the ML pipeline:
 | **2. Deduplication** | `report_duplicates` → `drop_full_duplicates` | Identifies and removes exact duplicate rows (120 dropped), ensuring clean, unique records|
 | **3. Normalize Target Labels** | `normalize_target(df, TARGET_COLUMN)` | Standardizes activity labels (e.g., collapsing “LowActivity”, “Low Activity”, “Low_Activity” into one class). Prevents label leakage and inconsistency |
 | **4. Missingness Flags** | `add_missing_flags(df, MISSINGNESS_FLAG_COLUMNS)` | Adds binary indicators (`is_missing_*`) to capture whether a sensor reading was missing. Preserves missingness as a predictive signal |
-| **Feature Selection** | Retains top SHAP-relevant features to enhance model simplicity and interpretability. |
-| **Feature Engineering** | - **Tree models**: Label encoding and domain-specific features. <br> - **Logistic Regression**: One-hot encoding with polynomial interaction terms. |
-| **Resampling** | Applies SMOTEENN to balance class distribution across activity levels. |
-| **Model Training** | Trains three models: Random Forest, XGBoost, and Logistic Regression. |
-| **Evaluation** | Generates performance metrics, confusion matrices, ROC/PR curves, learning curves, and SHAP explanations. |
+| **5. Interaction Features** | `interaction_features(df)` | Creates engineered features (e.g., ratios like `CO2_ratio`, combinations like `MOx_1x4`) to capture nonlinear relationships |
+| **6. Outlier Flags** | `add_outlier_flags_zscore(df, OUTLIER_COLUMNS_Z)` | Adds `is_outlier_*` flags using Z‑score thresholds (z=3.0). Helps models learn when sensor values deviate abnormally |
+| **7. Encode Categoricals** | `encode_categoricals(df, CATEGORICAL_COLUMNS, ORDINAL_MAPS)` | 
+Converts categorical variables: ordinal encoding for ordered categories, one‑hot encoding for nominal categories |
+| **8. Feature Selection** | Build `numeric_to_scale` + `passthrough_cols` | Splits features into numeric (scaled + imputed) and passthrough (flags, one‑hots, ordinals, session IDs) |
+| **9. Preprocessing Pipeline** | `build_preprocessor()` | - Numeric: `to_float` → median imputation → `RobustScaler`.<br>- Passthrough: **class‑conditional imputation** (per activity class) or constant `0` for numeric flags.<br>- Ensures no NaNs leak into training
 
 
 # Key findings

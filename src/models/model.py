@@ -9,9 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
-# -------------------------------
 # Custom class-conditional imputer
-# -------------------------------
 class ClassConditionalImputer(BaseEstimator, TransformerMixin):
     """
     Impute missing values conditionally on the target class.
@@ -52,9 +50,7 @@ class ClassConditionalImputer(BaseEstimator, TransformerMixin):
                 df.loc[mask, col] = df.loc[mask, col].fillna(val)
         return df
 
-# -------------------------------
 # Preprocessor builder
-# -------------------------------
 def build_preprocessor(numeric_cols, passthrough_cols, target_col=None):
     to_float = FunctionTransformer(lambda X: X.astype(np.float64), validate=False)
 
@@ -64,8 +60,9 @@ def build_preprocessor(numeric_cols, passthrough_cols, target_col=None):
         ("scaler", RobustScaler())
     ])
 
+    # Use 0 instead of "missing" to avoid dtype conflicts
     pass_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent"))
+        ("imputer", SimpleImputer(strategy="constant", fill_value=0))
     ])
 
     ct = ColumnTransformer(
@@ -76,7 +73,6 @@ def build_preprocessor(numeric_cols, passthrough_cols, target_col=None):
         remainder="drop"
     )
 
-    # If target_col is provided, wrap with class-conditional imputer
     if target_col is not None:
         return Pipeline([
             ("class_cond_imputer", ClassConditionalImputer(
@@ -89,9 +85,8 @@ def build_preprocessor(numeric_cols, passthrough_cols, target_col=None):
     else:
         return ct
 
-# -------------------------------
+
 # Model builders
-# -------------------------------
 def build_logreg(ct):
     return Pipeline([
         ("prep", ct),

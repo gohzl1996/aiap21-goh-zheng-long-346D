@@ -83,11 +83,13 @@ The following table summarizes the steps performed by the ML pipeline:
 | **4. Missingness Flags** | `add_missing_flags(df, MISSINGNESS_FLAG_COLUMNS)` | Adds binary indicators (`is_missing_*`) to capture whether a sensor reading was missing. Preserves missingness as a predictive signal |
 | **5. Interaction Features** | `interaction_features(df)` | Creates engineered features (e.g., ratios like `CO2_ratio`, combinations like `MOx_1x4`) to capture nonlinear relationships |
 | **6. Outlier Flags** | `add_outlier_flags_zscore(df, OUTLIER_COLUMNS_Z)` | Adds `is_outlier_*` flags using Z‑score thresholds (z=3.0). Helps models learn when sensor values deviate abnormally |
-| **7. Encode Categoricals** | `encode_categoricals(df, CATEGORICAL_COLUMNS, ORDINAL_MAPS)` | 
-Converts categorical variables: ordinal encoding for ordered categories, one‑hot encoding for nominal categories |
+| **7. Encode Categoricals** | `encode_categoricals(df, CATEGORICAL_COLUMNS, ORDINAL_MAPS)` | Converts categorical variables: ordinal encoding for ordered categories, one‑hot encoding for nominal categories |
 | **8. Feature Selection** | Build `numeric_to_scale` + `passthrough_cols` | Splits features into numeric (scaled + imputed) and passthrough (flags, one‑hots, ordinals, session IDs) |
-| **9. Preprocessing Pipeline** | `build_preprocessor()` | - Numeric: `to_float` → median imputation → `RobustScaler`.<br>- Passthrough: **class‑conditional imputation** (per activity class) or constant `0` for numeric flags.<br>- Ensures no NaNs leak into training
-
+| **9. Preprocessing Pipeline** | `build_preprocessor()` | - Numeric: `to_float` → median imputation → `RobustScaler`.<br>- Passthrough: **class‑conditional imputation** (per activity class) or constant `0` for numeric flags.<br>- Ensures no NaNs leak into training |
+| **10. Stratified Split** | 'stratified_split(df_sel, TARGET_COLUMN)' | Splits into train/test sets while preserving class distribution. Prevents imbalance distortion |
+| **11. Label Encoding** | `LabelEncoder()` | 
+Converts string activity labels into numeric indices `[0,1,2]` for model compatibility (esp. XGB) |
+| **12. Model Building** | `build_logreg`, `build_mlp`, `build_xgb` | Constructs three pipelines:<br>- **LogReg**: interpretable baseline with class_weight balancing.<br>- **MLP**: nonlinear neural net for complex sensor patterns.<br>- **XGB**: gradient boosting for robust, high‑performance predictions |
 
 # Key findings
 - The dataset was imbalanced, particularly with overrepresentation in the `Low Activity` class.

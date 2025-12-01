@@ -95,6 +95,13 @@ The following table summarizes the steps performed by the ML pipeline:
 | **16. Metrics** | 'macro_f1','per_class_f1' | Summarizes performance across classes (balanced view of imbalanced data) |
 | **17. Comparison** | Save to 'model_comparison.json' | Stores results for all models (macro F1, per‑class F1, confusion matrices) for visualization and reporting |
 
+# Why This Order Matters
+- **Clean first, then engineer**: Deduplication and label normalization prevent leakage before feature creation.
+- **Preserve signals**: Missingness and outliers are flagged, not dropped, to retain clinical relevance.
+- **Encode before split**: Ensures categorical consistency across train/test sets.
+- **Resampling & weighting applied during training**: Keeps evaluation fair and unbiased.
+- **Metrics last**: Business‑aligned evaluation ensures ElderGuard’s pipeline is not just technically sound but clinically useful.
+
 # Key findings
 - Duplicates present:
     - Exact duplicate rows were found and removed (~120 rows)

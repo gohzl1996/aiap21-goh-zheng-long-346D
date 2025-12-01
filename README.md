@@ -143,7 +143,7 @@ The following table summarizes the steps performed by the ML pipeline:
 
 - Class imbalance confirmed:
 
-    - Low activity cases underrepresented compared to moderate/high
+    - Low activity cases overrepresented compared to moderate/high
 
     - Models struggled most with minority class detection
 
